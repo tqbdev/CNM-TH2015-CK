@@ -9,8 +9,9 @@ const {
 } = require('./models')
 const config = require('./config/config')
 
-// const adminRoute = require('./routes/adminRoute')
-// const driverRoute = require('./routes/driverRoute')
+const commonRoute = require('./routes/common')
+const staffRoute = require('./routes/staff')
+const userRoute = require('./routes/user')
 
 const app = express()
 
@@ -23,8 +24,9 @@ app.use(cookieParser())
 app.use(bodyParser.json())
 app.use(cors())
 
-// app.use('/admin', adminRoute)
-// app.use('/drivers', driverRoute)
+app.use(commonRoute)
+app.use('/admin', staffRoute)
+app.use('/user', userRoute)
 
 require('./passport')
 
