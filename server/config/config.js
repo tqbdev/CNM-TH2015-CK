@@ -11,6 +11,6 @@ module.exports = {
   },
   authencation: {
     jwtSecret: process.env.JWT_SECRET || 'secret',
-    jwtExpiresIn: 60 * 1 // 1 minutes
+    jwtExpiresIn: 60 * 60 * 1 // 1 minutes
   }
 }

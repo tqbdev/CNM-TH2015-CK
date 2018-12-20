@@ -7,7 +7,7 @@
     </v-toolbar-title>
 
     <v-toolbar-items>
-      <v-btn flat :to="{
+      <v-btn :to="{
           name: 'home'
         }">Home</v-btn>
     </v-toolbar-items>
@@ -15,11 +15,21 @@
     <v-spacer></v-spacer>
 
     <v-toolbar-items>
-      <v-btn v-if="!isUserLoggedIn" flat :to="{
+      <v-btn v-if="!isUserLoggedIn" :to="{
           name: 'login'
         }">Login</v-btn>
 
-      <v-btn v-if="isUserLoggedIn" flat @click="logout()">Log Out</v-btn>
+      <v-menu offset-y v-if="isUserLoggedIn">
+        <v-btn slot="activator" dark>
+          {{user.name}}
+          <v-icon dark right>mdi-menu-down</v-icon>
+        </v-btn>
+        <v-list>
+          <v-list-tile @click="logout()">
+            <v-list-tile-title>Logout</v-list-tile-title>
+          </v-list-tile>
+        </v-list>
+      </v-menu>
     </v-toolbar-items>
   </v-toolbar>
 </template>

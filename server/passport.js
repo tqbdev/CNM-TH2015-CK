@@ -15,11 +15,7 @@ passport.use(
     secretOrKey: config.authencation.jwtSecret
   }, async function (jwtPayload, done) {
     try {
-      const user = await User.findOne({
-        where: {
-          id: jwtPayload.user.id
-        }
-      })
+      const user = await User.findByPk(jwtPayload.user.email)
 
       if (!user) {
         return done(new Error(), false)

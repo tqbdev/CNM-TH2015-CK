@@ -45,11 +45,7 @@ module.exports = {
         email,
         password
       } = req.body
-      const user = await User.findOne({
-        where: {
-          email
-        }
-      })
+      const user = await User.findByPk(email)
 
       if (!user) {
         return res.status(403).send({

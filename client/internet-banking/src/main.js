@@ -1,3 +1,7 @@
+import '@mdi/font/css/materialdesignicons.css'
+import 'vuetify/dist/vuetify.min.css'
+import 'vue-snotify/styles/material.css'
+
 import Vue from 'vue'
 import App from './App.vue'
 import router from '@/router/router'
@@ -8,10 +12,6 @@ import Snotify, {
 import {
   sync
 } from 'vuex-router-sync'
-
-import 'vuetify/dist/vuetify.min.css'
-import 'vue-snotify/styles/material.css'
-import 'material-design-icons-iconfont/dist/material-design-icons.css'
 
 import store from '@/store/store'
 
