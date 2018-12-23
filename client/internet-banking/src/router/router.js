@@ -2,7 +2,9 @@ import Vue from 'vue'
 import Router from 'vue-router'
 
 import Login from '@/components/Login'
-// import Home from '@/components/Home/Home'
+import Home from '@/components/Home'
+import Accounts from '@/components/Accounts'
+import Admin from '@/components/Admin/Admin'
 import store from '@/store/store'
 
 Vue.use(Router)
@@ -30,7 +32,7 @@ export default new Router({
     {
       path: '/admin',
       name: 'admin',
-      component: Login,
+      component: Admin,
       beforeEnter: (to, from, next) => {
         if (store.state.isUserLoggedIn) {
           if (store.state.user.isStaff) {
@@ -46,7 +48,7 @@ export default new Router({
     {
       path: '/home',
       name: 'home',
-      component: Login,
+      component: Home,
       beforeEnter: (to, from, next) => {
         if (store.state.isUserLoggedIn) {
           if (store.state.user.isStaff) {
@@ -58,6 +60,22 @@ export default new Router({
           next('/login')
         }
       }
+    },
+    {
+      path: '/accounts',
+      name: 'accounts',
+      component: Accounts,
+      // beforeEnter: (to, from, next) => {
+      //   if (store.state.isUserLoggedIn) {
+      //     if (store.state.user.isStaff) {
+      //       next('/admin')
+      //     } else {
+      //       next()
+      //     }
+      //   } else {
+      //     next('/login')
+      //   }
+      // }
     }
   ]
 })

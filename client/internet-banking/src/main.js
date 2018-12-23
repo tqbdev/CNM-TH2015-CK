@@ -1,6 +1,7 @@
 import '@mdi/font/css/materialdesignicons.css'
 import 'vuetify/dist/vuetify.min.css'
 import 'vue-snotify/styles/material.css'
+import 'material-design-icons-iconfont/dist/material-design-icons.css'
 
 import Vue from 'vue'
 import App from './App.vue'
@@ -28,6 +29,13 @@ const options = {
 Vue.use(Vuetify)
 Vue.use(Snotify, options)
 Vue.component('panel', Panel)
+
+Vue.filter('accountStatus', function (value) {
+  if (value) {
+    return 'OPEN'
+  }
+  return 'CLOSED'
+})
 
 sync(store, router)
 

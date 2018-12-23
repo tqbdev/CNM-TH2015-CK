@@ -14,7 +14,7 @@ module.exports = {
     })(req, res, next)
   },
 
-  isUserAuthenticated(req, res, next) {
+  isAuthenticated(req, res, next) {
     passport.authenticate('jwt', function (err, user) {
       if (err || !user) {
         res.status(403).send({

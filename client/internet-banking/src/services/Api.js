@@ -3,7 +3,7 @@ import store from '@/store/store'
 
 function getAccessToken() {
   return axios.post('http://localhost:8081/token', {
-    telephone: store.state.user.telephone,
+    email: store.state.user.email,
     refreshToken: store.state.refreshToken
   }).then(response => {
     store.dispatch('setAccessToken', response.data.token)

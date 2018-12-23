@@ -1,32 +1,53 @@
-const _ = require('lodash')
+const _ = require('lodash');
 
 const {
   Account,
   User
-} = require('../models')
+} = require('../models');
 
 module.exports = {
   async getAccounts(req, res) {
     try {
-      const user = req.user
+      const {
+        descending,
+        sortBy,
+        rowsPerPage,
+        page
+      } = JSON.parse(
+        req.query.pagination
+      );
+      const user = req.user;
 
-      const accounts = await Account.findAll({
+      let params = {
         where: {
           UserEmail: user.email
         }
-      })
+      };
+
+      if (+rowsPerPage > 0) {
+        params.limit = +rowsPerPage;
+        params.offset = (+page - 1) * +rowsPerPage;
+      }
+
+      if (sortBy) {
+        params.order = [
+          [sortBy, descending ? 'DESC' : 'ASC']
+        ];
+      }
+
+      const accounts = await Account.findAll(params);
 
       if (!accounts) {
         return res.status(404).send({
           error: 'Not found account belong to user has email ' + user.email
-        })
+        });
       }
 
-      res.send(accounts)
+      res.send(accounts);
     } catch (err) {
       res.status(500).send({
         error: 'Error in get accounts by user.'
-      })
+      });
     }
   },
 
@@ -34,111 +55,82 @@ module.exports = {
     try {
       const {
         email
-      } = req.body
+      } = req.body;
 
-      const user = await User.findByPk(email)
+      const user = await User.findByPk(email);
       if (!user) {
-        return res.status(404).send({
+        return res.status(405).send({
           error: 'Not found user has email ' + email
-        })
+        });
       }
 
       const newAccount = await Account.create({
         UserEmail: email
-      })
+      });
 
       res.send({
         account: newAccount.toJSON()
-      })
+      });
     } catch (err) {
       res.status(500).send({
         error: 'Error in create a account by staff.'
-      })
+      });
     }
   },
 
   async updateAccountById(req, res) {
     try {
+      const user = req.user;
       const {
         accountId
-      } = req.params
-
+      } = req.params;
       const {
-        email,
-        charge
-      } = req.body
-
-      const user = await User.findByPk(email)
-      if (!user) {
-        return res.status(404).send({
-          error: 'Not found user has email ' + email
-        })
-      }
-
-      const account = await Account.findOne({
-        where: {
-          UserEmail: email,
-          id: accountId
-        }
-      })
-
-      if (!account) {
-        return res.status(404).send({
-          error: 'Not found account has id ' + accountId + ' and belong to user has email ' + email
-        })
-      }
-      const currentBalance = account.balance
-      await account.update({
-        balance: currentBalance + charge
-      })
-
-      res.send({
-        account: account.toJSON()
-      })
-    } catch (err) {
-      res.status(500).send({
-        error: 'Error in update a account.'
-      })
-    }
-  },
-
-  async closeAccountById(req, res) {
-    try {
-      const user = req.user
-      const {
-        accountId
-      } = req.params
+        attributes
+      } = req.body;
 
       const account = await Account.findOne({
         where: {
           UserEmail: user.email,
           id: accountId
         }
-      })
+      });
 
       if (!account) {
         return res.status(404).send({
           error: 'Not found account has id ' + accountId
-        })
-      }
-      const currentBalance = account.balance
-      if (currentBalance > 0) {
-        return res.status(405).send({
-          error: 'The account has balance. Can\'t close'
-        })
+        });
       }
 
-      await account.update({
-        isOpen: false
-      })
+      if (attributes.isOpen === undefined) {
+        return res.status(406).send({
+          error: 'Not accepted. Required an attribute "isOpen"'
+        });
+      }
 
-      res.send({
-        account: account.toJSON()
-      })
+      if (attributes.isOpen === false) {
+        const currentBalance = account.balance;
+        if (currentBalance > 0) {
+          return res.status(405).send({
+            error: "The account has balance. Can't close"
+          });
+        }
+
+        await account.update({
+          isOpen: false
+        });
+
+        res.send({
+          account: account.toJSON()
+        });
+      } else {
+        return res.status(406).send({
+          error: "Not accepted. Can't reopen a closed account"
+        });
+      }
     } catch (err) {
       res.status(500).send({
-        error: 'Error in update a account.'
-      })
+        error: 'Error in update a account'
+      });
     }
   }
-}
+};

@@ -1,20 +1,18 @@
-const express = require('express')
-const router = express.Router()
+const express = require('express');
+const router = express.Router();
 
 const {
-  isUserAuthenticated,
+  isAuthenticated,
   isStaffAuthenticated
-} = require('../policies/Authenticated')
+} = require('../policies/Authenticated');
 const {
   getAccounts,
   createAccount,
-  updateAccountById,
-  closeAccountById
-} = require('../controllers/AccountsController')
+  updateAccountById
+} = require('../controllers/AccountsController');
 
-router.get('/', isUserAuthenticated, getAccounts)
-router.post('/', isStaffAuthenticated, createAccount)
-router.put('/:accountId', isStaffAuthenticated, updateAccountById)
-router.delete('/:accountId', isUserAuthenticated, closeAccountById)
+router.get('/', isAuthenticated, getAccounts);
+router.post('/', isStaffAuthenticated, createAccount);
+router.patch('/:accountId', isAuthenticated, updateAccountById);
 
-module.exports = router
+module.exports = router;
