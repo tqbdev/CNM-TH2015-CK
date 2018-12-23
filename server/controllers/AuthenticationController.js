@@ -1,11 +1,12 @@
 const jwt = require('jsonwebtoken')
 const randtoken = require('rand-token')
-// const _ = require('lodash')
+const _ = require('lodash')
 
 const {
   User
 } = require('../models')
 const config = require('../config/config')
+const GoogleRecaptcha = require('../services/GoogleRecaptcha')
 
 function jwtSignUser(user) {
   return jwt.sign({
@@ -19,7 +20,11 @@ module.exports = {
   async userRegister(req, res) {
     try {
       const refreshToken = randtoken.uid(256)
-      const user = await User.create(req.body)
+      const passwordRandom = randtoken.generate(8)
+      let bodyClone = _.clone(req.body)
+      bodyClone.password = passwordRandom
+      console.log('TESTING', bodyClone)
+      const user = await User.create(bodyClone)
 
       await user.update({
         refreshToken
@@ -43,13 +48,18 @@ module.exports = {
     try {
       const {
         email,
-        password
+        password,
+        gCaptchaResponse
       } = req.body
-      const user = await User.findOne({
-        where: {
-          email
-        }
-      })
+
+      const response = await GoogleRecaptcha.verity(gCaptchaResponse)
+      if (!response.success) {
+        return res.status(403).send({
+          error: 'The google recaptcha was incorrect. Pls try again'
+        })
+      }
+
+      const user = await User.findByPk(email)
 
       if (!user) {
         return res.status(403).send({

@@ -12,6 +12,7 @@ const config = require('./config/config')
 const commonRoute = require('./routes/common')
 const staffRoute = require('./routes/staff')
 const userRoute = require('./routes/user')
+const accountRoute = require('./routes/account')
 
 const app = express()
 
@@ -27,6 +28,7 @@ app.use(cors())
 app.use(commonRoute)
 app.use('/admin', staffRoute)
 app.use('/user', userRoute)
+app.use('/accounts', accountRoute)
 
 require('./passport')
 
