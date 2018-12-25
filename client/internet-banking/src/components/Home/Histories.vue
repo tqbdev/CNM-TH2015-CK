@@ -1,7 +1,7 @@
 <template>
   <v-layout row>
     <v-flex xs6 offset-xs3>
-      <panel title="Your accounts">
+      <panel title="Transaction History">
         <v-data-table
           :headers="headers"
           :items="accounts"
@@ -13,6 +13,7 @@
             <td class="text-xs-left">{{ props.item.id}}</td>
             <td class="text-xs-left">{{ props.item.balance}} VND</td>
             <td class="text-xs-left">{{ props.item.isOpen | accountStatus}}</td>
+            <td class="text-xs-left">{{ props.item.createdAt | convertDateTime}}</td>
             <td class="justify-center">
               <v-icon v-if="props.item.isOpen" medium class="mr-2" @click="tranfer">attach_money</v-icon>
               <v-icon
@@ -37,10 +38,9 @@
 </template>
 
 <script>
-import { mapState } from "vuex";
-import AccountsService from "@/services/AccountsService";
+import TransactionsService from "@/services/TransactionsService";
 export default {
-  name: "Accounts",
+  name: "Histories",
   data() {
     return {
       headers: [
@@ -57,6 +57,10 @@ export default {
           value: "isOpen"
         },
         {
+          text: "Created At",
+          value: "createdAt"
+        },
+        {
           text: "Action",
           value: "action",
           sortable: false
@@ -67,15 +71,12 @@ export default {
       pagination: {}
     };
   },
-  computed: {
-    ...mapState(["isUserLoggedIn", "user"])
-  },
   watch: {
     pagination: {
       async handler() {
         try {
           this.loading = true;
-          this.accounts = (await AccountsService.getAccounts(
+          this.accounts = (await TransactionsService.getTransactions(
             this.pagination
           )).data;
         } catch (err) {

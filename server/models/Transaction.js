@@ -5,6 +5,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false
     },
+    message: DataTypes.TEXT,
     codeVerify: DataTypes.STRING
   })
 

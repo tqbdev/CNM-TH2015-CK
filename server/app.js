@@ -13,6 +13,8 @@ const commonRoute = require('./routes/common')
 const staffRoute = require('./routes/staff')
 const userRoute = require('./routes/user')
 const accountRoute = require('./routes/account')
+const receiverRoute = require('./routes/receiver')
+const transactionRoute = require('./routes/transaction')
 
 const app = express()
 
@@ -29,6 +31,8 @@ app.use(commonRoute)
 app.use('/admin', staffRoute)
 app.use('/user', userRoute)
 app.use('/accounts', accountRoute)
+app.use('/receivers', receiverRoute)
+app.use('/transactions', transactionRoute)
 
 require('./passport')
 
