@@ -2,8 +2,9 @@ import Vue from 'vue'
 import Router from 'vue-router'
 
 import Login from '@/components/Login'
-import Home from '@/components/Home'
-import Accounts from '@/components/Accounts'
+import Home from '@/components/Home/Home'
+import Accounts from '@/components/Home/Accounts'
+import Receiver from '@/components/Receiver/Receiver'
 import Admin from '@/components/Admin/Admin'
 import store from '@/store/store'
 
@@ -76,6 +77,11 @@ export default new Router({
       //     next('/login')
       //   }
       // }
+    },
+    {
+      path: '/receivers',
+      name: 'receivers',
+      component: Receiver
     }
   ]
 })

@@ -1,12 +1,12 @@
 const _ = require('lodash');
 
 const {
-  Account,
+  Transaction,
   User
 } = require('../models');
 
 module.exports = {
-  async getAccounts(req, res) {
+  async getTransactions(req, res) {
     try {
       const {
         descending,
@@ -35,23 +35,23 @@ module.exports = {
         ];
       }
 
-      const accounts = await Account.findAll(params);
+      const transactions = await Transaction.findAll(params);
 
-      if (!accounts) {
+      if (!transactions) {
         return res.status(404).send({
-          error: 'Not found accounts belong to user has email ' + user.email
+          error: 'Not found transactions belong to user has email ' + user.email
         });
       }
 
-      res.send(accounts);
+      res.send(transactions);
     } catch (err) {
       res.status(500).send({
-        error: 'Error in get accounts by user.'
+        error: 'Error in get transactions by user.'
       });
     }
   },
 
-  async createAccount(req, res) {
+  async createTransaction(req, res) { // TODO: Rewrite createTransaction
     try {
       const {
         email
@@ -64,40 +64,40 @@ module.exports = {
         });
       }
 
-      const newAccount = await Account.create({
+      const newTransaction = await Transaction.create({
         UserEmail: email
       });
 
       res.send({
-        account: newAccount.toJSON()
+        transaction: newTransaction.toJSON()
       });
     } catch (err) {
       res.status(500).send({
-        error: 'Error in create a account by staff.'
+        error: 'Error in create a transaction by staff.'
       });
     }
   },
 
-  async updateAccountById(req, res) {
+  async updateTransactionById(req, res) { // TODO: Rewrite updateTransactionById - Check confirm CODE -> Done transaction || Resend code || Check timeout
     try {
       const user = req.user;
       const {
-        accountId
+        transactionId
       } = req.params;
       const {
         attributes
       } = req.body;
 
-      const account = await Account.findOne({
+      const transaction = await Transaction.findOne({
         where: {
           UserEmail: user.email,
-          id: accountId
+          id: transactionId
         }
       });
 
-      if (!account) {
+      if (!transaction) {
         return res.status(404).send({
-          error: 'Not found account has id ' + accountId
+          error: 'Not found transaction has id ' + transactionId
         });
       }
 
@@ -108,28 +108,28 @@ module.exports = {
       }
 
       if (attributes.isOpen === false) {
-        const currentBalance = account.balance;
+        const currentBalance = transaction.balance;
         if (currentBalance > 0) {
           return res.status(405).send({
-            error: "The account has balance. Can't close"
+            error: "The transaction has balance. Can't close"
           });
         }
 
-        await account.update({
+        await transaction.update({
           isOpen: false
         });
 
         res.send({
-          account: account.toJSON()
+          transaction: transaction.toJSON()
         });
       } else {
         return res.status(406).send({
-          error: "Not accepted. Can't reopen a closed account"
+          error: "Not accepted. Can't reopen a closed transaction"
         });
       }
     } catch (err) {
       res.status(500).send({
-        error: 'Error in update a account'
+        error: 'Error in update a transaction'
       });
     }
   }

@@ -2,7 +2,7 @@
   <v-layout row>
     <v-flex xs6 offset-xs3>
       <panel title="Login">
-        <v-form ref="form" lazy-validation name="request-receiver-login-form" autocomplete="off">
+        <v-form ref="form" lazy-validation name="internet-banking-login-form" autocomplete="off">
           <v-text-field label="Email" v-model="email" :rules="emailRules" required></v-text-field>
           <v-text-field
             label="Password"
