@@ -53,12 +53,12 @@ module.exports = {
     try {
       const { email, password, gCaptchaResponse } = req.body;
 
-      // const response = await GoogleRecaptcha.verity(gCaptchaResponse);
-      // if (!response.data.success) {
-      //   return res.status(403).send({
-      //     error: 'The google recaptcha was incorrect. Pls try again'
-      //   });
-      // }
+      const response = await GoogleRecaptcha.verity(gCaptchaResponse);
+      if (!response.data.success) {
+        return res.status(403).send({
+          error: 'The google recaptcha was incorrect. Pls try again'
+        });
+      }
 
       const user = await User.findByPk(email);
 
