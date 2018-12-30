@@ -2,17 +2,18 @@ const jwt = require('jsonwebtoken');
 const randtoken = require('rand-token');
 const _ = require('lodash');
 
-const {
-  User
-} = require('../models');
+const { User } = require('../models');
 const config = require('../config/config');
 const GoogleRecaptcha = require('../services/GoogleRecaptcha');
+const MailService = require('../services/mail');
 
 function jwtSignUser(user) {
-  return jwt.sign({
+  return jwt.sign(
+    {
       user
     },
-    config.authencation.jwtSecret, {
+    config.authencation.jwtSecret,
+    {
       expiresIn: config.authencation.jwtExpiresIn
     }
   );
@@ -25,9 +26,10 @@ module.exports = {
       const passwordRandom = randtoken.generate(8);
       let bodyClone = _.clone(req.body);
       bodyClone.password = passwordRandom;
-      console.log('TESTING', bodyClone);
       const user = await User.create(bodyClone);
-      // TODO: Send mail with passwordRandom
+
+      // Send mail with password
+      MailService.sendInitialPassword(user, passwordRandom);
 
       await user.update({
         refreshToken
@@ -49,11 +51,7 @@ module.exports = {
 
   async userLogin(req, res) {
     try {
-      const {
-        email,
-        password,
-        gCaptchaResponse
-      } = req.body;
+      const { email, password, gCaptchaResponse } = req.body;
 
       const response = await GoogleRecaptcha.verity(gCaptchaResponse);
       if (!response.data.success) {
@@ -101,10 +99,7 @@ module.exports = {
 
   async userToken(req, res) {
     try {
-      const {
-        email,
-        refreshToken
-      } = req.body;
+      const { email, refreshToken } = req.body;
       const user = await User.findOne({
         where: {
           email,
@@ -137,10 +132,7 @@ module.exports = {
 
   async userRevokeToken(req, res) {
     try {
-      const {
-        email,
-        refreshToken
-      } = req.body;
+      const { email, refreshToken } = req.body;
       const user = await User.findOne({
         where: {
           email,
