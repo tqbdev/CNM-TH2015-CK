@@ -1,34 +1,31 @@
 <template>
-  <v-layout row>
-    <v-flex xs6 offset-xs3>
-      <panel title="Transaction History">
-        <v-data-table
-          :headers="headers"
-          :items="transactions"
-          :pagination.sync="pagination"
-          class="elevation-1"
-          :disable-initial-sort="true"
-          :total-items="totalItems"
-        >
-          <template slot="items" slot-scope="props">
-            <td class="text-xs-left">{{ props.item.id}}</td>
-            <td class="text-xs-left">{{ props.item.senderAccountId}}</td>
-            <td class="text-xs-left">{{ props.item.receiverAccountId}}</td>
-            <td class="text-xs-left">{{ props.item.amount}}</td>
-            <td class="text-xs-left">{{ props.item.message}}</td>
-            <td class="text-xs-left">{{ props.item.createdAt | convertDateTime}}</td>
-            <td class="text-xs-left">{{ props.item.updatedAt | convertDateTime}}</td>
-          </template>
-          <template slot="no-data">
-            <v-alert :value="true" color="error" icon="warning">Sorry, nothing to display here :(</v-alert>
-          </template>
-        </v-data-table>
-        <div class="text-xs-center pt-2">
-          <v-pagination v-model="pagination.page" :length="totalPages"></v-pagination>
-        </div>
-      </panel>
-    </v-flex>
-  </v-layout>
+  <panel title="Transaction History">
+    <v-data-table
+      :headers="headers"
+      :items="transactions"
+      :pagination.sync="pagination"
+      class="elevation-1"
+      :disable-initial-sort="true"
+      :total-items="totalItems"
+    >
+      <template slot="items" slot-scope="props">
+        <td class="text-xs-left">{{ props.item.senderAccountId}}</td>
+        <td class="text-xs-left">{{ props.item.receiverAccountId}}</td>
+        <td v-if="props.item.senderAccount" class="text-xs-left">- {{ props.item.amount}}</td>
+        <td v-if="props.item.receiverAccount" class="text-xs-left">+ {{ props.item.amount}}</td>
+        <td class="text-xs-left">{{ props.item.message}}</td>
+        <td class="text-xs-left">{{ props.item.createdAt | convertDateTime}}</td>
+        <td class="text-xs-left">{{ props.item.updatedAt | convertDateTime}}</td>
+        <td class="text-xs-left">{{ props.item.isDone}}</td>
+      </template>
+      <template slot="no-data">
+        <v-alert :value="true" color="error" icon="warning">Sorry, nothing to display here :(</v-alert>
+      </template>
+    </v-data-table>
+    <div class="text-xs-center pt-2">
+      <v-pagination v-model="pagination.page" :length="totalPages"></v-pagination>
+    </div>
+  </panel>
 </template>
 
 <script>
@@ -38,10 +35,6 @@ export default {
   data() {
     return {
       headers: [
-        {
-          text: "ID",
-          value: "id"
-        },
         {
           text: "Sender",
           value: "senderAccountId"
@@ -65,6 +58,10 @@ export default {
         {
           text: "Updated At",
           value: "updatedAt"
+        },
+        {
+          text: "Done",
+          value: "isDone"
         }
       ],
       transactions: [],
@@ -93,10 +90,6 @@ export default {
       },
       deep: true
     }
-  },
-  methods: {
-    closeAccount() {},
-    tranfer() {}
   }
 };
 </script>

@@ -31,11 +31,13 @@ module.exports = (sequelize, DataTypes) => {
 
   Transaction.associate = function(models) {
     Transaction.belongsTo(models.Account, {
+      as: 'senderAccount',
       foreignKey: {
         name: 'senderAccountId'
       }
     });
     Transaction.belongsTo(models.Account, {
+      as: 'receiverAccount',
       foreignKey: {
         name: 'receiverAccountId',
         allowNull: false

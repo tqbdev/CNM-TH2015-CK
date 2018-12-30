@@ -62,10 +62,19 @@ module.exports = {
         include: [
           {
             model: Account,
+            as: 'senderAccount',
             where: {
               UserEmail: user.email
             },
-            required: true
+            required: false
+          },
+          {
+            model: Account,
+            as: 'receiverAccount',
+            where: {
+              UserEmail: user.email
+            },
+            required: false
           }
         ]
       };
@@ -83,7 +92,9 @@ module.exports = {
         params.order = [[sortBy, descending ? 'DESC' : 'ASC']];
       }
 
-      const transactions = await Transaction.findAll(params);
+      const transactions = await Transaction.findAll(params).map(transaction =>
+        transaction.toJSON()
+      );
 
       if (!transactions) {
         return res.status(404).send({
@@ -91,12 +102,28 @@ module.exports = {
         });
       }
 
+      _.map(transactions, transaction => {
+        delete transaction.codeVerify;
+        if (transaction.senderAccount) {
+          transaction.senderAccount = true;
+        } else {
+          transaction.senderAccount = false;
+        }
+
+        if (transaction.receiverAccount) {
+          transaction.receiverAccount = true;
+        } else {
+          transaction.receiverAccount = false;
+        }
+      });
+
       res.send({
         transactions,
         totalTransactions,
         totalPages
       });
     } catch (err) {
+      console.log(err);
       res.status(500).send({
         error: 'Error in get transactions by user.'
       });
