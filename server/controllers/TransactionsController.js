@@ -1,38 +1,86 @@
 const _ = require('lodash');
 
-const {
-  Transaction,
-  User
-} = require('../models');
+const { Transaction, User, Account } = require('../models');
+const MailService = require('../services/mail');
 
 module.exports = {
+  async getTransactionById(req, res) {
+    try {
+      const user = req.user;
+      const { transactionId } = req.params;
+
+      let transaction = (await Transaction.findOne({
+        where: {
+          id: transactionId,
+          isDone: false
+        }
+      })).toJSON();
+
+      if (!transaction) {
+        return res.status(404).send({
+          error: 'Not found transaction has id ' + transactionId
+        });
+      }
+
+      const senderAccount = await Account.findByPk(transaction.senderAccountId);
+      if (senderAccount.UserEmail !== user.email) {
+        return res.status(404).send({
+          error: 'Not found transaction has id ' + transactionId
+        });
+      }
+
+      delete transaction.codeVerify;
+
+      res.send({
+        transaction
+      });
+    } catch (err) {
+      res.status(500).send({
+        error: 'Error in get transaction by id'
+      });
+    }
+  },
+
   async getTransactions(req, res) {
     try {
-      const {
-        descending,
-        sortBy,
-        rowsPerPage,
-        page
-      } = JSON.parse(
-        req.query.pagination
-      );
+      let pagination = null;
+      if (req.query.pagination) {
+        pagination = JSON.parse(req.query.pagination);
+      } else {
+        pagination = {
+          descending: false,
+          sortBy: null,
+          rowsPerPage: 5,
+          page: 1
+        };
+      }
+      const { descending, sortBy, rowsPerPage, page } = pagination;
+
       const user = req.user;
 
       let params = {
-        where: {
-          UserEmail: user.email
-        }
+        include: [
+          {
+            model: Account,
+            where: {
+              UserEmail: user.email
+            },
+            required: true
+          }
+        ]
       };
+
+      const totalTransactions = await Transaction.count(params);
+      let totalPages = 1;
 
       if (+rowsPerPage > 0) {
         params.limit = +rowsPerPage;
         params.offset = (+page - 1) * +rowsPerPage;
+        totalPages = Math.ceil(totalTransactions / +rowsPerPage);
       }
 
       if (sortBy) {
-        params.order = [
-          [sortBy, descending ? 'DESC' : 'ASC']
-        ];
+        params.order = [[sortBy, descending ? 'DESC' : 'ASC']];
       }
 
       const transactions = await Transaction.findAll(params);
@@ -43,7 +91,11 @@ module.exports = {
         });
       }
 
-      res.send(transactions);
+      res.send({
+        transactions,
+        totalTransactions,
+        totalPages
+      });
     } catch (err) {
       res.status(500).send({
         error: 'Error in get transactions by user.'
@@ -51,47 +103,106 @@ module.exports = {
     }
   },
 
-  async createTransaction(req, res) { // TODO: Rewrite createTransaction
+  async createTransaction(req, res) {
     try {
-      const {
-        email
-      } = req.body;
+      const user = req.user;
 
-      const user = await User.findByPk(email);
-      if (!user) {
-        return res.status(405).send({
-          error: 'Not found user has email ' + email
+      if (user.isStaff) {
+        const { receiverAccountId, amount } = req.body;
+
+        const receiverAccount = await Account.findByPk(receiverAccountId);
+
+        if (!receiverAccount) {
+          return res.status(404).send({
+            error: 'Not found receiver account has id ' + receiverAccountId
+          });
+        }
+
+        if (isNaN(amount) || +amount <= 0) {
+          return res.status(406).send({
+            error: 'Not accepted. Amount is uncorrect'
+          });
+        }
+
+        await Transaction.create({
+          receiverAccountId,
+          amount,
+          message: 'Admin charge money to your account',
+          isDone: true
+        });
+
+        const currentBalance = receiverAccount.balance;
+        await receiverAccount.update({
+          balance: currentBalance + +amount
+        });
+
+        res.send();
+      } else {
+        const { senderAccountId, receiverAccountId, amount } = req.body;
+
+        const senderAccount = await Account.findOne({
+          where: {
+            UserEmail: user.email,
+            id: senderAccountId
+          }
+        });
+
+        if (!senderAccount) {
+          return res.status(404).send({
+            error:
+              'Not found sender account belong to user has id ' +
+              senderAccountId
+          });
+        }
+
+        const receiverAccount = await Account.findByPk(receiverAccountId);
+
+        if (!receiverAccount) {
+          return res.status(404).send({
+            error: 'Not found receiver account has id ' + receiverAccountId
+          });
+        }
+
+        if (isNaN(amount) || +amount <= 0) {
+          return res.status(406).send({
+            error: 'Not accepted. Amount is uncorrect'
+          });
+        }
+
+        if (senderAccount.balance < +amount) {
+          return res.status(406).send({
+            error: `Not accepted. Sender account doesn't have enough money`
+          });
+        }
+
+        let newTransaction = (await Transaction.create(req.body)).toJSON();
+
+        // Send OTP to user email
+        MailService.sendTranferCode(user, newTransaction.codeVerify);
+
+        delete newTransaction.codeVerify;
+
+        res.send({
+          transaction: newTransaction
         });
       }
-
-      const newTransaction = await Transaction.create({
-        UserEmail: email
-      });
-
-      res.send({
-        transaction: newTransaction.toJSON()
-      });
     } catch (err) {
       res.status(500).send({
-        error: 'Error in create a transaction by staff.'
+        error: 'Error in create a transaction.'
       });
     }
   },
 
-  async updateTransactionById(req, res) { // TODO: Rewrite updateTransactionById - Check confirm CODE -> Done transaction || Resend code || Check timeout
+  async updateTransactionById(req, res) {
     try {
       const user = req.user;
-      const {
-        transactionId
-      } = req.params;
-      const {
-        attributes
-      } = req.body;
+      const { transactionId } = req.params;
+      const { attributes } = req.body;
 
       const transaction = await Transaction.findOne({
         where: {
-          UserEmail: user.email,
-          id: transactionId
+          id: transactionId,
+          isDone: false
         }
       });
 
@@ -101,32 +212,49 @@ module.exports = {
         });
       }
 
-      if (attributes.isOpen === undefined) {
-        return res.status(406).send({
-          error: 'Not accepted. Required an attribute "isOpen"'
+      const senderAccount = await Account.findByPk(transaction.senderAccountId);
+      if (senderAccount.UserEmail !== user.email) {
+        return res.status(404).send({
+          error: 'Not found transaction has id ' + transactionId
         });
       }
 
-      if (attributes.isOpen === false) {
-        const currentBalance = transaction.balance;
-        if (currentBalance > 0) {
-          return res.status(405).send({
-            error: "The transaction has balance. Can't close"
-          });
-        }
-
-        await transaction.update({
-          isOpen: false
-        });
-
-        res.send({
-          transaction: transaction.toJSON()
-        });
-      } else {
+      if (attributes.codeVerify === undefined) {
         return res.status(406).send({
-          error: "Not accepted. Can't reopen a closed transaction"
+          error: 'Not accepted. Required an attribute "codeVerify"'
         });
       }
+
+      const codeVerify = attributes.codeVerify;
+      delete attributes.codeVerify;
+      if (!_.isEmpty(attributes)) {
+        return res.status(406).send({
+          error: 'Not accepted. We accepted only an attribute "name"'
+        });
+      }
+
+      const isCodeValid = await transaction.compareCode(codeVerify);
+      if (!isCodeValid) {
+        return res.status(406).send({
+          error: 'Not accepted. Code verify was incorrect'
+        });
+      }
+
+      const receiverAccount = await Account.findByPk(
+        transaction.receiverAccountId
+      );
+      const currentReceiverBalance = receiverAccount.balance;
+      const currentSenderBalance = senderAccount.balance;
+      await senderAccount.update({
+        balance: currentSenderBalance - transaction.amount
+      });
+      await receiverAccount.update({
+        balance: currentReceiverBalance + transaction.amount
+      });
+      await transaction.update({
+        isDone: true
+      });
+      res.send();
     } catch (err) {
       res.status(500).send({
         error: 'Error in update a transaction'

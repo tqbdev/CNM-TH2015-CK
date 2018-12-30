@@ -1,27 +1,30 @@
-import Vue from 'vue'
-import Router from 'vue-router'
+import Vue from 'vue';
+import Router from 'vue-router';
 
-import Login from '@/components/Login'
-import Home from '@/components/Home/Home'
-import Accounts from '@/components/Home/Accounts'
-import Receiver from '@/components/Receiver/Receiver'
-import Admin from '@/components/Admin/Admin'
-import store from '@/store/store'
+import Login from '@/components/Login';
+import Home from '@/components/Home/Home';
+import Receiver from '@/components/Receiver/Receiver';
+import Admin from '@/components/Admin/Admin';
+import Transfer from '@/components/Transfer/Transfer';
+import ConfirmTransaction from '@/components/Transfer/ConfirmTransaction';
+import NotFound from '@/components/NotFound';
+import store from '@/store/store';
 
-Vue.use(Router)
+Vue.use(Router);
 
 export default new Router({
-  routes: [{
+  routes: [
+    {
       path: '*',
       beforeEnter: (to, from, next) => {
         if (store.state.isUserLoggedIn) {
           if (store.state.user.isStaff) {
-            next('/admin')
+            next('/admin');
           } else {
-            next('/home')
+            next('/home');
           }
         } else {
-          next('/login')
+          next('/login');
         }
       }
     },
@@ -31,18 +34,23 @@ export default new Router({
       component: Login
     },
     {
+      path: '/404',
+      name: '404',
+      component: NotFound
+    },
+    {
       path: '/admin',
       name: 'admin',
       component: Admin,
       beforeEnter: (to, from, next) => {
         if (store.state.isUserLoggedIn) {
           if (store.state.user.isStaff) {
-            next()
+            next();
           } else {
-            next('/home')
+            next('/home');
           }
         } else {
-          next('/login')
+          next('/login');
         }
       }
     },
@@ -53,35 +61,34 @@ export default new Router({
       beforeEnter: (to, from, next) => {
         if (store.state.isUserLoggedIn) {
           if (store.state.user.isStaff) {
-            next('/admin')
+            next('/admin');
           } else {
-            next()
+            next();
           }
         } else {
-          next('/login')
+          next('/login');
         }
       }
-    },
-    {
-      path: '/accounts',
-      name: 'accounts',
-      component: Accounts,
-      // beforeEnter: (to, from, next) => {
-      //   if (store.state.isUserLoggedIn) {
-      //     if (store.state.user.isStaff) {
-      //       next('/admin')
-      //     } else {
-      //       next()
-      //     }
-      //   } else {
-      //     next('/login')
-      //   }
-      // }
     },
     {
       path: '/receivers',
       name: 'receivers',
       component: Receiver
+    },
+    {
+      path: '/transfer/:senderAccountId',
+      name: 'transfer',
+      component: Transfer
+    },
+    {
+      path: '/transfer',
+      name: 'transfer',
+      component: Transfer
+    },
+    {
+      path: '/confirm-transaction/:transactionId',
+      name: 'confirm-transaction',
+      component: ConfirmTransaction
     }
   ]
-})
+});
