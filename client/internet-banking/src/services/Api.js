@@ -3,7 +3,7 @@ import store from '@/store/store';
 
 function getAccessToken() {
   return axios
-    .post('https://45.119.212.169:8081/token', {
+    .post('https://45.119.212.169/token', {
       email: store.state.user.email,
       refreshToken: store.state.refreshToken
     })
@@ -15,7 +15,7 @@ function getAccessToken() {
 
 export default () => {
   const instance = axios.create({
-    baseURL: `https://45.119.212.169:8081/`,
+    baseURL: `https://45.119.212.169/`,
     headers: {
       Authorization: `Bearer ${store.state.accessToken}`
     }
