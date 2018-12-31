@@ -135,13 +135,22 @@ module.exports = {
       const user = req.user;
 
       if (user.isStaff) {
-        const { receiverAccountId, amount } = req.body;
+        const { receiverAccountId, amount, receiverEmail } = req.body;
 
-        const receiverAccount = await Account.findByPk(receiverAccountId);
+        const receiverAccount = await Account.findOne({
+          where: {
+            id: receiverAccountId,
+            UserEmail: receiverEmail
+          }
+        });
 
         if (!receiverAccount) {
           return res.status(404).send({
-            error: 'Not found receiver account has id ' + receiverAccountId
+            error:
+              'Not found receiver account has id ' +
+              receiverAccountId +
+              ' belongs to user has email ' +
+              receiverEmail
           });
         }
 

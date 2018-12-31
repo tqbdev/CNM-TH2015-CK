@@ -73,22 +73,66 @@ export default new Router({
     {
       path: '/receivers',
       name: 'receivers',
-      component: Receiver
+      component: Receiver,
+      beforeEnter: (to, from, next) => {
+        if (store.state.isUserLoggedIn) {
+          if (store.state.user.isStaff) {
+            next('/admin');
+          } else {
+            next();
+          }
+        } else {
+          next('/login');
+        }
+      }
     },
     {
       path: '/transfer/:senderAccountId',
       name: 'transfer',
-      component: Transfer
+      component: Transfer,
+      beforeEnter: (to, from, next) => {
+        if (store.state.isUserLoggedIn) {
+          if (store.state.user.isStaff) {
+            next('/admin');
+          } else {
+            next();
+          }
+        } else {
+          next('/login');
+        }
+      }
     },
     {
       path: '/transfer',
       name: 'transfer',
-      component: Transfer
+      component: Transfer,
+      beforeEnter: (to, from, next) => {
+        if (store.state.isUserLoggedIn) {
+          if (store.state.user.isStaff) {
+            next('/admin');
+          } else {
+            next();
+          }
+        } else {
+          next('/login');
+        }
+      }
     },
     {
       path: '/confirm-transaction/:transactionId',
       name: 'confirm-transaction',
-      component: ConfirmTransaction
+      component: ConfirmTransaction,
+      beforeEnter: (to, from, next) => {
+        if (store.state.isUserLoggedIn) {
+          if (store.state.user.isStaff) {
+            next('/admin');
+          } else {
+            next();
+          }
+        } else {
+          next('/login');
+        }
+      }
     }
   ]
 });
