@@ -17,6 +17,8 @@
 </template>
 
 <script>
+import TransactionsService from "@/services/TransactionsService";
+
 export default {
   name: "ChargeAccount",
   data() {
@@ -33,7 +35,24 @@ export default {
     };
   },
   methods: {
-    async chargeAccount() {}
+    async chargeAccount() {
+      if (this.$refs.form.validate() && !this.loading) {
+        try {
+          this.loading = true;
+          await TransactionsService.createTransaction({
+            receiverEmail: this.email,
+            receiverAccountId: this.accountNumber,
+            amount: this.amount
+          });
+
+          this.$snotify.success("Charge account successfully");
+        } catch (err) {
+          this.$snotify.error(err.response.data.error);
+        } finally {
+          this.loading = false;
+        }
+      }
+    }
   }
 };
 </script>
