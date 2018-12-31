@@ -34,7 +34,13 @@ const getBlockchain = (): Block[] => blockchain;
 
 const getLatestBlock = (): Block => blockchain[blockchain.length - 1];
 
-const isValidTimestamp = (newBlock: Block, previousBlock: Block): boolean => {
-    return ( previousBlock.timestamp - 60 < newBlock.timestamp )
-        && newBlock.timestamp - 60 < getCurrentTimestamp();
+const generateNextBlock = (blockData: string) => {
+    const previousBlock: Block = getLatestBlock();
+    const nextIndex: number = previousBlock.index + 1;
+    const nextTimestamp: number = new Date().getTime() / 1000;
+    const nextHash: string = calculateHash(nextIndex, previousBlock.hash, nextTimestamp, blockData);
+    const newBlock: Block = new Block(nextIndex, nextHash, previousBlock.hash, nextTimestamp, blockData);
+    addBlock(newBlock);
+    broadcastLatest();
+    return newBlock;
 };
