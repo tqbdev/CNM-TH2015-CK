@@ -60,4 +60,4 @@ class Naivecoin {
   }
 }
 
-module.exports = new Chiccocoin()
+module.exports = new Naivecoin()
