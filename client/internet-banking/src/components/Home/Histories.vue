@@ -11,8 +11,18 @@
       <template slot="items" slot-scope="props">
         <td class="text-xs-left">{{ props.item.senderAccountId}}</td>
         <td class="text-xs-left">{{ props.item.receiverAccountId}}</td>
-        <td v-if="props.item.senderAccount" class="text-xs-left">- {{ props.item.amount}}</td>
-        <td v-if="props.item.receiverAccount" class="text-xs-left">+ {{ props.item.amount}}</td>
+        <td
+          v-if="props.item.senderAccount && !props.item.receiverAccount"
+          class="text-xs-left"
+        >- {{ props.item.amount}}</td>
+        <td
+          v-if="props.item.receiverAccount && !props.item.senderAccount"
+          class="text-xs-left"
+        >+ {{ props.item.amount}}</td>
+        <td
+          v-if="props.item.senderAccount && props.item.receiverAccount"
+          class="text-xs-left"
+        >{{ props.item.amount}}</td>
         <td class="text-xs-left">{{ props.item.message}}</td>
         <td class="text-xs-left">{{ props.item.createdAt | convertDateTime}}</td>
         <td class="text-xs-left">{{ props.item.updatedAt | convertDateTime}}</td>
