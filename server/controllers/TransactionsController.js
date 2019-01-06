@@ -1,4 +1,6 @@
 const _ = require('lodash');
+const Sequelize = require('sequelize');
+const Op = Sequelize.Op;
 
 const { Transaction, User, Account } = require('../models');
 const MailService = require('../services/mail');
@@ -58,26 +60,51 @@ module.exports = {
 
       const user = req.user;
 
+      const userAccountIds = await Account.findAll({
+        attributes: ['id'],
+        where: {
+          UserEmail: user.email
+        }
+      }).map(account => account.toJSON().id);
+      console.log(userAccountIds);
+
       let params = {
-        include: [
-          {
-            model: Account,
-            as: 'senderAccount',
-            where: {
-              UserEmail: user.email
+        where: {
+          [Op.or]: [
+            {
+              senderAccountId: {
+                [Op.or]: userAccountIds
+              }
             },
-            required: false
-          },
-          {
-            model: Account,
-            as: 'receiverAccount',
-            where: {
-              UserEmail: user.email
-            },
-            required: false
-          }
-        ]
+            {
+              receiverAccountId: {
+                [Op.or]: userAccountIds
+              }
+            }
+          ]
+        }
       };
+
+      // let params = {
+      //   include: [
+      //     {
+      //       model: Account,
+      //       as: 'senderAccount',
+      //       where: {
+      //         UserEmail: user.email
+      //       },
+      //       required: false
+      //     },
+      //     {
+      //       model: Account,
+      //       as: 'receiverAccount',
+      //       where: {
+      //         UserEmail: user.email
+      //       },
+      //       required: false
+      //     }
+      //   ]
+      // };
 
       const totalTransactions = await Transaction.count(params);
       let totalPages = 1;
@@ -104,13 +131,13 @@ module.exports = {
 
       _.map(transactions, transaction => {
         delete transaction.codeVerify;
-        if (transaction.senderAccount) {
+        if (_.includes(userAccountIds, transaction.senderAccountId)) {
           transaction.senderAccount = true;
         } else {
           transaction.senderAccount = false;
         }
 
-        if (transaction.receiverAccount) {
+        if (_.includes(userAccountIds, transaction.receiverAccountId)) {
           transaction.receiverAccount = true;
         } else {
           transaction.receiverAccount = false;
