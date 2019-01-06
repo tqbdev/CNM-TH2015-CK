@@ -1,12 +1,24 @@
 <template>
-  <v-layout row>
-    <v-flex xs10 offset-xs1></v-flex>
+  <v-layout row wrap>
+    <v-flex xs10 offset-xs1>
+      <account></account>
+    </v-flex>
+    <v-flex xs10 offset-xs1 mt-4>
+      <histories></histories>
+    </v-flex>
   </v-layout>
 </template>
 
 <script>
+import Account from "./Account/Account";
+import Histories from "./Histories";
+
 export default {
-  name: "Home"
+  name: "Home",
+  components: {
+    Account,
+    Histories
+  }
 };
 </script>
 

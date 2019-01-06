@@ -1,33 +1,22 @@
 const _ = require('lodash');
 
-const {
-  Receiver,
-  User,
-  Account
-} = require('../models');
+const { Receiver, User, Account } = require('../models');
 
 module.exports = {
   async getReceivers(req, res) {
     try {
       let pagination = null;
       if (req.query.pagination) {
-        pagination = JSON.parse(
-          req.query.pagination
-        );
+        pagination = JSON.parse(req.query.pagination);
       } else {
         pagination = {
           descending: false,
           sortBy: null,
           rowsPerPage: 5,
           page: 1
-        }
+        };
       }
-      const {
-        descending,
-        sortBy,
-        rowsPerPage,
-        page
-      } = pagination;
+      const { descending, sortBy, rowsPerPage, page } = pagination;
 
       const user = req.user;
 
@@ -37,15 +26,17 @@ module.exports = {
         }
       };
 
+      const totalReceivers = await Receiver.count(params);
+      let totalPages = 1;
+
       if (+rowsPerPage > 0) {
         params.limit = +rowsPerPage;
         params.offset = (+page - 1) * +rowsPerPage;
+        totalPages = Math.ceil(totalReceivers / +rowsPerPage);
       }
 
       if (sortBy) {
-        params.order = [
-          [sortBy, descending ? 'DESC' : 'ASC']
-        ];
+        params.order = [[sortBy, descending ? 'DESC' : 'ASC']];
       }
 
       const receivers = await Receiver.findAll(params);
@@ -56,7 +47,11 @@ module.exports = {
         });
       }
 
-      res.send(receivers);
+      res.send({
+        receivers,
+        totalReceivers,
+        totalPages
+      });
     } catch (err) {
       res.status(500).send({
         error: 'Error in get receivers by user.'
@@ -66,10 +61,7 @@ module.exports = {
 
   async createReceiver(req, res) {
     try {
-      let {
-        name,
-        accountId
-      } = req.body;
+      let { name, accountId } = req.body;
       const user = req.user;
 
       const currentReceiver = await Receiver.findOne({
@@ -93,9 +85,11 @@ module.exports = {
           where: {
             id: accountId
           },
-          include: [{
-            model: User
-          }]
+          include: [
+            {
+              model: User
+            }
+          ]
         });
         name = account.User.name;
       }
@@ -122,68 +116,11 @@ module.exports = {
     }
   },
 
-  async updateReceiverById(req, res) { // TODO: Rewrite updateReceiverById
+  async updateReceiverById(req, res) {
     try {
       const user = req.user;
-      const {
-        accountId
-      } = req.params;
-      const {
-        attributes
-      } = req.body;
-
-      const account = await Receiver.findOne({
-        where: {
-          UserEmail: user.email,
-          id: accountId
-        }
-      });
-
-      if (!account) {
-        return res.status(404).send({
-          error: 'Not found account has id ' + accountId
-        });
-      }
-
-      if (attributes.isOpen === undefined) {
-        return res.status(406).send({
-          error: 'Not accepted. Required an attribute "isOpen"'
-        });
-      }
-
-      if (attributes.isOpen === false) {
-        const currentBalance = account.balance;
-        if (currentBalance > 0) {
-          return res.status(405).send({
-            error: "The account has balance. Can't close"
-          });
-        }
-
-        await account.update({
-          isOpen: false
-        });
-
-        res.send({
-          account: account.toJSON()
-        });
-      } else {
-        return res.status(406).send({
-          error: "Not accepted. Can't reopen a closed account"
-        });
-      }
-    } catch (err) {
-      res.status(500).send({
-        error: 'Error in update a account'
-      });
-    }
-  },
-
-  async deleteReceiverById(req, res) {
-    try {
-      const user = req.user;
-      const {
-        receiverId
-      } = req.params;
+      const { receiverId } = req.params;
+      const { attributes } = req.body;
 
       const receiver = await Receiver.findOne({
         where: {
@@ -194,7 +131,55 @@ module.exports = {
 
       if (!receiver) {
         return res.status(404).send({
-          error: 'Not found receiver has id ' + receiverId + ' and belong to user'
+          error:
+            'Not found receiver has id ' + receiverId + ' and belong to user'
+        });
+      }
+
+      if (attributes.name === undefined) {
+        return res.status(406).send({
+          error: 'Not accepted. Required an attribute "name"'
+        });
+      }
+
+      const name = attributes.name;
+      delete attributes.name;
+      if (!_.isEmpty(attributes)) {
+        return res.status(406).send({
+          error: 'Not accepted. We accepted only an attribute "name"'
+        });
+      }
+
+      await receiver.update({
+        name: name
+      });
+
+      res.send({
+        receiver
+      });
+    } catch (err) {
+      res.status(500).send({
+        error: 'Error in update a receiver by user.'
+      });
+    }
+  },
+
+  async deleteReceiverById(req, res) {
+    try {
+      const user = req.user;
+      const { receiverId } = req.params;
+
+      const receiver = await Receiver.findOne({
+        where: {
+          id: receiverId,
+          UserEmail: user.email
+        }
+      });
+
+      if (!receiver) {
+        return res.status(404).send({
+          error:
+            'Not found receiver has id ' + receiverId + ' and belong to user'
         });
       }
       await receiver.destroy();
@@ -202,7 +187,7 @@ module.exports = {
       res.send({});
     } catch (err) {
       res.status(500).send({
-        error: 'Error in destroy a receiver by user.'
+        error: 'Error in delete a receiver by user.'
       });
     }
   }

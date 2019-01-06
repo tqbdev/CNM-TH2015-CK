@@ -1,40 +1,41 @@
 <template>
-  <v-layout row>
-    <v-flex xs6 offset-xs3>
-      <panel title="Transaction History">
-        <v-data-table
-          :headers="headers"
-          :items="accounts"
-          :pagination.sync="pagination"
-          class="elevation-1"
-          :disable-initial-sort="true"
-        >
-          <template slot="items" slot-scope="props">
-            <td class="text-xs-left">{{ props.item.id}}</td>
-            <td class="text-xs-left">{{ props.item.balance}} VND</td>
-            <td class="text-xs-left">{{ props.item.isOpen | accountStatus}}</td>
-            <td class="text-xs-left">{{ props.item.createdAt | convertDateTime}}</td>
-            <td class="justify-center">
-              <v-icon v-if="props.item.isOpen" medium class="mr-2" @click="tranfer">attach_money</v-icon>
-              <v-icon
-                v-if="props.item.isOpen"
-                medium
-                dark
-                class="mt-2 red"
-                @click="closeAccount"
-              >close</v-icon>
-            </td>
-          </template>
-          <template slot="no-data">
-            <v-alert :value="true" color="error" icon="warning">Sorry, nothing to display here :(</v-alert>
-          </template>
-        </v-data-table>
-        <div class="text-xs-center pt-2">
-          <v-pagination v-model="pagination.page" :length="pages"></v-pagination>
-        </div>
-      </panel>
-    </v-flex>
-  </v-layout>
+  <panel title="Transaction History">
+    <v-data-table
+      :headers="headers"
+      :items="transactions"
+      :pagination.sync="pagination"
+      class="elevation-1"
+      :disable-initial-sort="true"
+      :total-items="totalItems"
+    >
+      <template slot="items" slot-scope="props">
+        <td class="text-xs-left">{{ props.item.senderAccountId}}</td>
+        <td class="text-xs-left">{{ props.item.receiverAccountId}}</td>
+        <td
+          v-if="props.item.senderAccount && !props.item.receiverAccount"
+          class="text-xs-left"
+        >- {{ props.item.amount}}</td>
+        <td
+          v-if="props.item.receiverAccount && !props.item.senderAccount"
+          class="text-xs-left"
+        >+ {{ props.item.amount}}</td>
+        <td
+          v-if="props.item.senderAccount && props.item.receiverAccount"
+          class="text-xs-left"
+        >{{ props.item.amount}}</td>
+        <td class="text-xs-left">{{ props.item.message}}</td>
+        <td class="text-xs-left">{{ props.item.createdAt | convertDateTime}}</td>
+        <td class="text-xs-left">{{ props.item.updatedAt | convertDateTime}}</td>
+        <td class="text-xs-left">{{ props.item.isDone}}</td>
+      </template>
+      <template slot="no-data">
+        <v-alert :value="true" color="error" icon="warning">Sorry, nothing to display here :(</v-alert>
+      </template>
+    </v-data-table>
+    <div class="text-xs-center pt-2">
+      <v-pagination v-model="pagination.page" :length="totalPages"></v-pagination>
+    </div>
+  </panel>
 </template>
 
 <script>
@@ -45,30 +46,39 @@ export default {
     return {
       headers: [
         {
-          text: "ID",
-          value: "id"
+          text: "Sender",
+          value: "senderAccountId"
         },
         {
-          text: "Balance",
-          value: "balance"
+          text: "Receiver",
+          value: "receiverAccountId"
         },
         {
-          text: "Status",
-          value: "isOpen"
+          text: "Amount",
+          value: "amount"
+        },
+        {
+          text: "Message",
+          value: "message"
         },
         {
           text: "Created At",
           value: "createdAt"
         },
         {
-          text: "Action",
-          value: "action",
-          sortable: false
+          text: "Updated At",
+          value: "updatedAt"
+        },
+        {
+          text: "Done",
+          value: "isDone"
         }
       ],
-      accounts: [],
+      transactions: [],
       loading: false,
-      pagination: {}
+      pagination: {},
+      totalPages: 0,
+      totalItems: 0
     };
   },
   watch: {
@@ -76,9 +86,12 @@ export default {
       async handler() {
         try {
           this.loading = true;
-          this.accounts = (await TransactionsService.getTransactions(
+          const data = (await TransactionsService.getTransactions(
             this.pagination
           )).data;
+          this.transactions = data.transactions;
+          this.totalPages = data.totalPages;
+          this.totalItems = data.totalTransactions;
         } catch (err) {
           this.$snotify.error(err.response.data.error);
         } finally {
@@ -87,11 +100,6 @@ export default {
       },
       deep: true
     }
-  },
-  mounted() {},
-  methods: {
-    closeAccount() {},
-    tranfer() {}
   }
 };
 </script>

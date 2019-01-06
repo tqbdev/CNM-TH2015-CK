@@ -43,6 +43,7 @@ export default {
           });
 
           this.$snotify.success("Register user successfully");
+          this.$snotify.success("Check register's email, getting login password");
         } catch (error) {
           this.$snotify.error(error.response.data.error);
         } finally {

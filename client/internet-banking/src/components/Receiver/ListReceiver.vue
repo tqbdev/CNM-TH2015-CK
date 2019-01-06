@@ -6,15 +6,18 @@
       :pagination.sync="pagination"
       class="elevation-1"
       :disable-initial-sort="true"
+      :loading="loading"
+      :total-items="total"
     >
+      <v-progress-linear slot="progress" color="blue" indeterminate></v-progress-linear>
       <template slot="items" slot-scope="props">
         <td class="text-xs-left">{{ props.item.AccountId}}</td>
         <td class="text-xs-left">{{ props.item.name}}</td>
         <td class="text-xs-left">{{ props.item.createdAt | convertDateTime}}</td>
         <td class="text-xs-left">{{ props.item.updatedAt | convertDateTime}}</td>
         <td class="justify-center">
-          <v-icon medium class="mr-2" @click="editReceiver">edit</v-icon>
-          <v-icon medium class="mt-2" @click="deleteReceiver">delete</v-icon>
+          <v-icon medium class="mr-2" @click="editReceiver(props.item)">edit</v-icon>
+          <v-icon medium @click="deleteReceiver(props.item)">delete</v-icon>
         </td>
       </template>
       <template slot="no-data">
@@ -24,18 +27,21 @@
     <div class="text-xs-center pt-2">
       <v-pagination v-model="pagination.page" :length="pages"></v-pagination>
     </div>
-    <div class="text-xs-left pt-2">
-      <strong>Auto refresh every 5s</strong>
-    </div>
   </panel>
 </template>
 
 <script>
-import ReceiversService from "@/services/ReceiversService";
 export default {
   name: "ListReceiver",
+  props: {
+    receivers: Array,
+    pages: Number,
+    loading: Boolean,
+    total: Number
+  },
   data() {
     return {
+      pagination: {},
       headers: [
         {
           text: "Account Receiver ID",
@@ -58,38 +64,24 @@ export default {
           value: "action",
           sortable: false
         }
-      ],
-      receivers: [],
-      loading: false,
-      pagination: {}
+      ]
     };
+  },
+  methods: {
+    editReceiver(receiver) {
+      this.$emit("edit", receiver);
+    },
+    deleteReceiver(receiver) {
+      this.$emit("delete", receiver);
+    }
   },
   watch: {
     pagination: {
       handler() {
-        this.fetchReceiver();
+        this.$emit("paginationChanged", this.pagination);
       },
       deep: true
     }
-  },
-  mounted() {
-    setInterval(this.fetchReceiver, 5000);
-  },
-  methods: {
-    async fetchReceiver() {
-      try {
-        this.loading = true;
-        this.receivers = (await ReceiversService.getReceivers(
-          this.pagination
-        )).data;
-      } catch (err) {
-        this.$snotify.error(err.response.data.error);
-      } finally {
-        this.loading = false;
-      }
-    },
-    editReceiver() {},
-    deleteReceiver() {}
   }
 };
 </script>

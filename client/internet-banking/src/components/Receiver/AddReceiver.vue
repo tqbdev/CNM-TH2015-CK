@@ -9,33 +9,25 @@
 </template>
 
 <script>
-import ReceiversService from "@/services/ReceiversService";
 export default {
   name: "AddReceiver",
   data() {
     return {
       name: "",
       accountNumber: "",
-      loading: false,
       requiredRules: [v => !!v || "This field is required"]
     };
   },
+  props: {
+    loading: Boolean
+  },
   methods: {
-    async addReceiver() {
+    addReceiver() {
       if (this.$refs.form.validate() && !this.loading) {
-        try {
-          this.loading = true;
-          await ReceiversService.createReceiver({
-            name: this.name,
-            accountId: this.accountNumber
-          });
-
-          this.$snotify.success("Create receiver successfully");
-        } catch (error) {
-          this.$snotify.error(error.response.data.error);
-        } finally {
-          this.loading = false;
-        }
+        this.$emit("add", {
+          name: this.name,
+          accountId: this.accountNumber
+        });
       }
     }
   }
