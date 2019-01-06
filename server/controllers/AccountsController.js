@@ -1,21 +1,51 @@
 const _ = require('lodash');
 
-const {
-  Account,
-  User
-} = require('../models');
+const { Account, User } = require('../models');
 
 module.exports = {
+  async getAccountById(req, res) {
+    try {
+      const user = req.user;
+      const { accountId } = req.params;
+
+      const account = await Account.findOne({
+        where: {
+          UserEmail: user.email,
+          id: accountId
+        }
+      });
+
+      if (!account) {
+        return res.status(404).send({
+          error: 'Not found account has id ' + accountId
+        });
+      }
+
+      res.send({
+        account: account.toJSON()
+      });
+    } catch (err) {
+      res.status(500).send({
+        error: 'Error in get account by id'
+      });
+    }
+  },
+
   async getAccounts(req, res) {
     try {
-      const {
-        descending,
-        sortBy,
-        rowsPerPage,
-        page
-      } = JSON.parse(
-        req.query.pagination
-      );
+      let pagination = null;
+      if (req.query.pagination) {
+        pagination = JSON.parse(req.query.pagination);
+      } else {
+        pagination = {
+          descending: false,
+          sortBy: null,
+          rowsPerPage: 5,
+          page: 1
+        };
+      }
+      const { descending, sortBy, rowsPerPage, page } = pagination;
+
       const user = req.user;
 
       let params = {
@@ -24,15 +54,17 @@ module.exports = {
         }
       };
 
+      const totalAccounts = await Account.count(params);
+      let totalPages = 1;
+
       if (+rowsPerPage > 0) {
         params.limit = +rowsPerPage;
         params.offset = (+page - 1) * +rowsPerPage;
+        totalPages = Math.ceil(totalAccounts / +rowsPerPage);
       }
 
       if (sortBy) {
-        params.order = [
-          [sortBy, descending ? 'DESC' : 'ASC']
-        ];
+        params.order = [[sortBy, descending ? 'DESC' : 'ASC']];
       }
 
       const accounts = await Account.findAll(params);
@@ -43,7 +75,11 @@ module.exports = {
         });
       }
 
-      res.send(accounts);
+      res.send({
+        accounts,
+        totalAccounts,
+        totalPages
+      });
     } catch (err) {
       res.status(500).send({
         error: 'Error in get accounts by user.'
@@ -53,9 +89,7 @@ module.exports = {
 
   async createAccount(req, res) {
     try {
-      const {
-        email
-      } = req.body;
+      const { email } = req.body;
 
       const user = await User.findByPk(email);
       if (!user) {
@@ -81,12 +115,8 @@ module.exports = {
   async updateAccountById(req, res) {
     try {
       const user = req.user;
-      const {
-        accountId
-      } = req.params;
-      const {
-        attributes
-      } = req.body;
+      const { accountId } = req.params;
+      const { attributes } = req.body;
 
       const account = await Account.findOne({
         where: {
@@ -107,7 +137,27 @@ module.exports = {
         });
       }
 
-      if (attributes.isOpen === false) {
+      const isOpen = attributes.isOpen;
+      delete attributes.isOpen;
+      if (!_.isEmpty(attributes)) {
+        return res.status(406).send({
+          error: 'Not accepted. We accepted only an attribute "isOpen"'
+        });
+      }
+
+      if (isOpen === false) {
+        const counts = await Account.count({
+          where: {
+            UserEmail: user.email,
+            isOpen: true
+          }
+        });
+        if (counts <= 1) {
+          return res.status(406).send({
+            error: `Not accepted. You can't close the last account`
+          });
+        }
+
         const currentBalance = account.balance;
         if (currentBalance > 0) {
           return res.status(405).send({

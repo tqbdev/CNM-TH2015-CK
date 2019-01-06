@@ -2,15 +2,16 @@
   <div>
     <v-toolbar fixed class="cyan hidden-sm-and-down" dark>
       <v-toolbar-title class="mr-4">
-        <router-link class="home" tag="span" :to="{
-          name: 'home'
-        }">iB@nking</router-link>
+        <span class="home" @click="rootPage()">iB@nking</span>
       </v-toolbar-title>
 
-      <v-toolbar-items>
+      <v-toolbar-items v-if="isUserLoggedIn && !user.isStaff">
         <v-btn :to="{
           name: 'home'
         }">Home</v-btn>
+        <v-btn :to="{
+          name: 'receivers'
+        }">Receivers</v-btn>
       </v-toolbar-items>
 
       <v-spacer></v-spacer>
@@ -36,14 +37,15 @@
     <v-expansion-panel fixed class="cyan hidden-md-and-up" dark>
       <v-expansion-panel-content>
         <div slot="header">
-          <router-link class="home" tag="span" :to="{
-          name: 'home'
-        }">iB@nking</router-link>
+          <span class="home" @click="rootPage()">iB@nking</span>
         </div>
-        <v-card>
+        <v-card v-if="isUserLoggedIn && !user.isStaff">
           <v-btn :to="{
             name: 'home'
           }">Home</v-btn>
+          <v-btn :to="{
+            name: 'receivers'
+          }">Receivers</v-btn>
         </v-card>
         <v-card>
           <v-btn v-if="!isUserLoggedIn" :to="{
@@ -85,6 +87,17 @@ export default {
       this.$router.push({
         name: "login"
       });
+    },
+    rootPage() {
+      if (this.user.isStaff) {
+        this.$router.push({
+          name: "admin"
+        });
+      } else {
+        this.$router.push({
+          name: "home"
+        });
+      }
     }
   }
 };

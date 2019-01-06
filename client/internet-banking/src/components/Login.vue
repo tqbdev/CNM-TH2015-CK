@@ -57,9 +57,16 @@ export default {
           this.$store.dispatch("setAccessToken", response.data.token);
           this.$store.dispatch("setRefreshToken", response.data.refreshToken);
           this.$store.dispatch("setUser", response.data.user);
-          // this.$router.push({
-          //   name: "home"
-          // });
+
+          if (response.data.user.isStaff) {
+            this.$router.push({
+              name: "admin"
+            });
+          } else {
+            this.$router.push({
+              name: "home"
+            });
+          }
           this.$snotify.success("Login successfully");
         } catch (error) {
           this.$snotify.error(error.response.data.error);

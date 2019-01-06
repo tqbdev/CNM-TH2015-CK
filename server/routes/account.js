@@ -8,11 +8,13 @@ const {
 const {
   getAccounts,
   createAccount,
-  updateAccountById
+  updateAccountById,
+  getAccountById
 } = require('../controllers/AccountsController');
 
 router.get('/', isAuthenticated, getAccounts);
 router.post('/', isStaffAuthenticated, createAccount);
 router.patch('/:accountId', isAuthenticated, updateAccountById);
+router.get('/:accountId', isAuthenticated, getAccountById);
 
 module.exports = router;

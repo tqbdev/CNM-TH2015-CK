@@ -8,17 +8,20 @@ module.exports = (sequelize, DataTypes) => {
     balance: {
       type: DataTypes.DOUBLE,
       defaultValue: 0,
-      allowNull: false
+      allowNull: false,
+      validate: {
+        min: 0
+      }
     },
     isOpen: {
       type: DataTypes.BOOLEAN,
       defaultValue: true
     }
-  })
+  });
 
-  Account.associate = function (models) {
-    Account.belongsTo(models.User)
-  }
+  Account.associate = function(models) {
+    Account.belongsTo(models.User);
+  };
 
-  return Account
-}
+  return Account;
+};

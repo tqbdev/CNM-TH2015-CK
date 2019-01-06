@@ -1,23 +1,33 @@
 <template>
-  <panel title="Your receivers">
+  <panel title="Your accounts">
     <v-data-table
       :headers="headers"
-      :items="receivers"
+      :items="accounts"
       :pagination.sync="pagination"
       class="elevation-1"
       :disable-initial-sort="true"
-      :loading="loading"
       :total-items="total"
     >
       <v-progress-linear slot="progress" color="blue" indeterminate></v-progress-linear>
       <template slot="items" slot-scope="props">
-        <td class="text-xs-left">{{ props.item.AccountId}}</td>
-        <td class="text-xs-left">{{ props.item.name}}</td>
+        <td class="text-xs-left">{{ props.item.id}}</td>
+        <td class="text-xs-left">{{ props.item.balance}} VND</td>
+        <td class="text-xs-left">{{ props.item.isOpen | accountStatus}}</td>
         <td class="text-xs-left">{{ props.item.createdAt | convertDateTime}}</td>
-        <td class="text-xs-left">{{ props.item.updatedAt | convertDateTime}}</td>
         <td class="justify-center">
-          <v-icon medium class="mr-2" @click="editReceiver(props.item)">edit</v-icon>
-          <v-icon medium @click="deleteReceiver(props.item)">delete</v-icon>
+          <v-icon
+            v-if="props.item.isOpen"
+            medium
+            class="mr-2"
+            @click="tranfer(props.item)"
+          >attach_money</v-icon>
+          <v-icon
+            v-if="props.item.isOpen"
+            medium
+            dark
+            class="red"
+            @click="closeAccount(props.item)"
+          >close</v-icon>
         </td>
       </template>
       <template slot="no-data">
@@ -32,9 +42,9 @@
 
 <script>
 export default {
-  name: "ListReceiver",
+  name: "ListAccount",
   props: {
-    receivers: Array,
+    accounts: Array,
     pages: Number,
     loading: Boolean,
     total: Number
@@ -44,20 +54,20 @@ export default {
       pagination: {},
       headers: [
         {
-          text: "Account Receiver ID",
-          value: "AccountId"
+          text: "ID",
+          value: "id"
         },
         {
-          text: "Receiver's Name",
-          value: "name"
+          text: "Balance",
+          value: "balance"
+        },
+        {
+          text: "Status",
+          value: "isOpen"
         },
         {
           text: "Created At",
           value: "createdAt"
-        },
-        {
-          text: "Updated At",
-          value: "updatedAt"
         },
         {
           text: "Action",
@@ -68,11 +78,11 @@ export default {
     };
   },
   methods: {
-    editReceiver(receiver) {
-      this.$emit("edit", receiver);
+    closeAccount(account) {
+      this.$emit("close", account);
     },
-    deleteReceiver(receiver) {
-      this.$emit("delete", receiver);
+    tranfer(account) {
+      this.$emit("transfer", account);
     }
   },
   watch: {
